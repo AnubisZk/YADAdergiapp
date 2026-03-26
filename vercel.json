@@ -1,8 +1,4 @@
 {
-  "functions": {
-    "evaluate.js": { "runtime": "@vercel/node" },
-    "upload.js": { "runtime": "@vercel/node" }
-  },
   "routes": [
     { "src": "/api/evaluate", "dest": "/evaluate.js" },
     { "src": "/api/upload", "dest": "/upload.js" },
