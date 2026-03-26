@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YADA Dergisi — Makale Gönderim Sistemi</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1a1208;--ink2:#3d2f1a;--cream:#f5f0e8;--paper:#faf7f2;
+  --gold:#b8860b;--gold2:#d4a017;--rust:#8b3a0f;--sage:#4a5e4a;
+  --blue:#2b5797;--bdr:#d4c9b0;--sh:rgba(26,18,8,.1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--cream);color:var(--ink);font-family:'Source Serif 4',Georgia,serif;font-size:15px;line-height:1.7;min-height:100vh;}
+
+/* HEADER */
+header{background:var(--ink);padding:22px 24px 18px;position:relative;}
+header::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--rust),var(--gold));}
+.badge{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.15em;color:var(--gold2);background:rgba(184,134,11,.15);border:1px solid rgba(184,134,11,.3);padding:3px 10px;border-radius:2px;display:inline-block;margin-bottom:6px;}
+h1{font-family:'Playfair Display',serif;font-size:clamp(1.5rem,4vw,2.2rem);color:var(--cream);font-weight:700;line-height:1.15;}
+h1 em{color:var(--gold2);font-style:italic;}
+.sub{font-size:12px;color:rgba(245,240,232,.5);margin-top:4px;font-style:italic;}
+
+/* STEP INDICATOR */
+.steps{background:var(--ink2);display:flex;border-bottom:1px solid rgba(184,134,11,.2);}
+.step{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;color:rgba(245,240,232,.4);border-bottom:2px solid transparent;transition:all .3s;cursor:default;}
+.step.active{color:var(--gold2);border-bottom-color:var(--gold2);}
+.step.done{color:#6ab04c;border-bottom-color:#6ab04c;}
+.step-num{width:20px;height:20px;border-radius:50%;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;}
+
+/* MAIN */
+main{max-width:800px;margin:0 auto;padding:28px 20px 60px;}
+
+/* PAGE TRANSITIONS */
+.page{display:none;animation:fadeUp .35s ease forwards;}
+.page.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* SECTION TITLE */
+.stitle{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;margin:0 0 14px;padding-bottom:8px;border-bottom:2px solid var(--ink);display:flex;align-items:center;gap:8px;}
+.stitle .n{font-family:'JetBrains Mono',monospace;font-size:10px;background:var(--ink);color:var(--cream);padding:2px 7px;border-radius:2px;}
+
+/* FORM CARD */
+.card{background:var(--paper);border:1px solid var(--bdr);border-radius:4px;padding:22px;margin-bottom:16px;box-shadow:0 2px 8px var(--sh);position:relative;}
+.card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--gold);border-radius:4px 0 0 4px;}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.fg:last-child{margin-bottom:0;}
+label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--ink2);text-transform:uppercase;}
+input[type=text],select,textarea{background:white;border:1px solid var(--bdr);border-radius:3px;padding:8px 12px;font-family:'Source Serif 4',serif;font-size:14px;color:var(--ink);outline:none;width:100%;transition:border-color .2s,box-shadow .2s;}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 2px rgba(184,134,11,.12);}
+textarea{min-height:220px;resize:vertical;line-height:1.8;font-size:13.5px;}
+.wc{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink2);text-align:right;margin-top:3px;}
+.wc.over{color:var(--rust);font-weight:500;}
+.wc.ok{color:var(--sage);}
+
+/* CHECKLIST */
+.checklist{background:rgba(184,134,11,.05);border:1px solid rgba(184,134,11,.2);border-radius:4px;padding:14px 18px;margin-bottom:16px;}
+.cl-t{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--gold);text-transform:uppercase;margin-bottom:8px;}
+.checklist ul{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;}
+.checklist li{font-size:12px;color:var(--ink2);display:flex;gap:6px;}
+.checklist li::before{content:'○';color:var(--bdr);font-size:11px;flex-shrink:0;}
+
+/* BUTTONS */
+.btn-primary{width:100%;background:var(--ink);color:var(--cream);border:none;padding:14px;font-family:'Playfair Display',serif;font-size:1rem;font-style:italic;cursor:pointer;border-radius:3px;transition:background .2s;letter-spacing:.01em;}
+.btn-primary:hover{background:var(--ink2);}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+.btn-back{background:none;border:1px solid var(--bdr);color:var(--ink2);padding:8px 18px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;cursor:pointer;border-radius:3px;margin-bottom:20px;transition:all .2s;}
+.btn-back:hover{border-color:var(--ink2);color:var(--ink);}
+
+/* ERROR */
+.err{background:rgba(139,58,15,.08);border:1px solid rgba(139,58,15,.25);border-radius:4px;padding:12px 16px;color:var(--rust);font-size:13px;margin-top:12px;display:none;}
+.err.on{display:block;}
+
+/* LOADING */
+.loading{display:none;text-align:center;padding:40px 20px;}
+.loading.on{display:block;}
+.spin{width:36px;height:36px;border:2px solid var(--bdr);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-t{font-style:italic;color:var(--ink2);font-size:14px;}
+
+/* ── PAGE 2: RESULTS ── */
+.score-header{background:var(--ink);border-radius:4px 4px 0 0;padding:22px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.sl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--gold2);margin-bottom:3px;}
+.st{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:var(--cream);}
+.sp{font-size:12px;color:rgba(245,240,232,.5);margin-top:2px;}
+.sc{width:72px;height:72px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;border:2.5px solid;}
+.sc .b{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;line-height:1;}
+.sc .s{font-family:'JetBrains Mono',monospace;font-size:9px;}
+.sA{border-color:#6ab04c;color:#6ab04c}.sB{border-color:var(--gold2);color:var(--gold2)}.sC{border-color:#e1a832;color:#e1a832}.sD{border-color:var(--rust);color:var(--rust)}
+.results-body{background:var(--paper);border:1px solid var(--bdr);border-top:none;border-radius:0 0 4px 4px;padding:24px;margin-bottom:16px;}
+.rt{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin-bottom:10px;}
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.cc{background:white;border:1px solid var(--bdr);border-radius:3px;padding:12px;position:relative;overflow:hidden;}
+.cc::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px;}
+.cp::before{background:#6ab04c}.cw::before{background:var(--gold2)}.cf::before{background:var(--rust)}
+.cn{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--ink2);text-transform:uppercase;margin-bottom:3px;}
+.cs{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;line-height:1;margin-bottom:4px;}
+.cp .cs{color:#6ab04c}.cw .cs{color:var(--gold2)}.cf .cs{color:var(--rust)}
+.cf2{font-size:11.5px;color:var(--ink2);line-height:1.45;}
+hr.dv{border:none;border-top:1px solid var(--bdr);margin:18px 0;}
+.gf{font-size:14px;line-height:1.8;color:var(--ink);font-style:italic;padding:16px 18px;background:rgba(184,134,11,.05);border-left:3px solid var(--gold);margin-bottom:16px;}
+.sugs{display:flex;flex-direction:column;gap:6px;margin-bottom:4px;}
+.sug{display:flex;gap:8px;font-size:13px;padding:8px 12px;background:white;border:1px solid var(--bdr);border-radius:3px;align-items:flex-start;}
+
+/* UPLOAD SECTION */
+.upload-section{margin-top:16px;}
+.upload-card{background:var(--paper);border:1px solid var(--bdr);border-radius:4px;padding:20px;margin-bottom:12px;box-shadow:0 2px 8px var(--sh);}
+.upload-card-title{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.upload-card-title span{width:6px;height:6px;border-radius:50%;background:var(--gold);display:inline-block;}
+.upload-btns{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.btn-upload{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;border:none;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.06em;flex:1;min-width:130px;transition:all .2s;color:white;position:relative;}
+.btn-upload:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2);}
+.btn-upload:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none;}
+.bw{background:var(--blue);}
+.bp{background:var(--rust);}
+.bg{background:var(--sage);}
+
+.upload-status{font-family:'JetBrains Mono',monospace;font-size:10px;padding:6px 12px;border-radius:3px;margin-top:6px;display:none;}
+.upload-status.ok{display:block;background:rgba(106,176,76,.12);color:#4a8a2e;border:1px solid rgba(106,176,76,.25);}
+.upload-status.fail{display:block;background:rgba(139,58,15,.08);color:var(--rust);border:1px solid rgba(139,58,15,.2);}
+.upload-status.loading{display:block;background:rgba(184,134,11,.08);color:var(--gold);border:1px solid rgba(184,134,11,.2);}
+
+.etik-upload-area{border:2px dashed var(--bdr);border-radius:3px;padding:18px;text-align:center;cursor:pointer;transition:all .2s;background:white;}
+.etik-upload-area:hover{border-color:var(--gold);background:rgba(184,134,11,.03);}
+.etik-upload-area input{display:none;}
+.etik-upload-text{font-size:13px;color:var(--ink2);margin-top:4px;}
+.etik-file-name{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--sage);margin-top:6px;display:none;}
+
+.drive-link{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--sage);text-decoration:none;margin-top:8px;font-family:'JetBrains Mono',monospace;letter-spacing:.04em;}
+.drive-link:hover{text-decoration:underline;}
+
+@media(max-width:560px){
+  .row{grid-template-columns:1fr;}
+  .cg{grid-template-columns:1fr;}
+  .checklist ul{grid-template-columns:1fr;}
+  .score-header{flex-direction:column;align-items:flex-start;}
+  .upload-btns{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badge">YADA DERGİSİ — MAKALE BAŞVURU SİSTEMİ</div>
+  <h1>Makale <em>Gönderim</em> & Değerlendirme</h1>
+  <p class="sub">Etik uygunluk kontrolü ve Drive'a otomatik yükleme</p>
+</header>
+
+<div class="steps">
+  <div class="step active" id="step1"><div class="step-num">1</div>FORM & DEĞERLENDİRME</div>
+  <div class="step" id="step2"><div class="step-num">2</div>SONUÇ & YÜKLEME</div>
+</div>
+
+<main>
+
+  <!-- ══ PAGE 1: FORM ══ -->
+  <div class="page active" id="page1">
+
+    <div class="stitle"><span class="n">01</span> Yazar Bilgileri</div>
+    <div class="card">
+      <div class="row">
+        <div class="fg"><label>Yazar 1 — Ad Soyad *</label><input type="text" id="a1" placeholder="Adınız Soyadınız"></div>
+        <div class="fg"><label>Sınıf / Kurum *</label><input type="text" id="cl" placeholder="10-A / Altıeylül BİLSEM"></div>
+      </div>
+      <div class="row">
+        <div class="fg"><label>Yazar 2 (isteğe bağlı)</label><input type="text" id="a2" placeholder="Varsa ikinci yazar"></div>
+        <div class="fg"><label>Metin Türü *</label>
+          <select id="tp">
+            <option value="">— Seçiniz —</option>
+            <option>Akademik Araştırma Makalesi</option>
+            <option>Bilimsel Derleme</option>
+            <option>Deneme</option><option>Şiir</option><option>Öykü</option>
+            <option>Röportaj</option><option>Gezi Yazısı</option>
+            <option>Tanıtım Yazısı</option><option>Öğrenci Görüş Yazısı</option>
+            <option>Okul Etkinliği Haberi</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label>Başlık *</label><input type="text" id="ti" placeholder="Yazınızın başlığı"></div>
+    </div>
+
+    <div class="stitle" style="margin-top:20px"><span class="n">02</span> Makale Metni</div>
+    <div class="card">
+      <div class="fg">
+        <label>Metin (en fazla 2000 kelime)</label>
+        <textarea id="tx" placeholder="Yazınızı buraya yapıştırın...&#10;&#10;TDK yazım kurallarına uygun, özgün ve akıcı bir anlatım tercih edilmelidir."></textarea>
+      </div>
+      <div class="wc" id="wc">0 kelime</div>
+    </div>
+
+    <div class="checklist">
+      <div class="cl-t">📋 Göndermeden Önce Kontrol</div>
+      <ul>
+        <li>Metin Türkçe mi?</li><li>2000 kelime veya altında mı?</li>
+        <li>Başlık içerikle uyumlu mu?</li><li>Yazım/noktalama denetlendi mi?</li>
+        <li>Kaynak/görsel bilgisi eklendi mi?</li><li>İçerik özgün, intihal yok mu?</li>
+        <li>Hakaret, saldırı yok mu?</li><li>Yazar adı ve sınıf yazıldı mı?</li>
+      </ul>
+    </div>
+
+    <button class="btn-primary" id="evalBtn" onclick="evaluate()">
+      Etik Uygunluk Değerlendirmesini Başlat →
+    </button>
+    <div class="err" id="err1"></div>
+
+    <div class="loading" id="ld1">
+      <div class="spin"></div>
+      <div class="load-t">Metin yapay zeka ile analiz ediliyor…</div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE 2: RESULTS + UPLOAD ══ -->
+  <div class="page" id="page2">
+
+    <button class="btn-back" onclick="goBack()">← Forma Dön</button>
+
+    <!-- Score header -->
+    <div class="score-header">
+      <div>
+        <div class="sl">DEĞERLENDİRME SONUCU</div>
+        <div class="st" id="rtt">—</div>
+        <div class="sp" id="rtp">—</div>
+      </div>
+      <div class="sc" id="rsc"><div class="b" id="rsn">—</div><div class="s">/ 100</div></div>
+    </div>
+
+    <!-- Results body -->
+    <div class="results-body">
+      <div class="rt">KRİTER BAZLI PUANLAMA</div>
+      <div class="cg" id="cg"></div>
+      <hr class="dv">
+      <div class="rt">GENEL DEĞERLENDİRME</div>
+      <div class="gf" id="gf"></div>
+      <div class="rt">GELİŞTİRİLECEK NOKTALAR</div>
+      <div class="sugs" id="sg"></div>
+    </div>
+
+    <!-- UPLOAD: Makale -->
+    <div class="upload-section">
+      <div class="upload-card">
+        <div class="upload-card-title"><span></span>MAKALEYİ DRIVE'A YÜKLE</div>
+        <div class="upload-btns">
+          <button class="btn-upload bw" id="bWord" onclick="uploadMakale('word')">
+            📄 Word olarak yükle
+          </button>
+          <button class="btn-upload bp" id="bPdf" onclick="uploadMakale('pdf')">
+            📑 PDF olarak yükle
+          </button>
+        </div>
+        <div class="upload-status" id="makaleStatus"></div>
+        <a class="drive-link" href="https://drive.google.com/drive/u/0/folders/1c0RdVN8WbCC_h7U8SNupukUG9AaDje4F" target="_blank">
+          🗂 Makale klasörünü aç →
+        </a>
+      </div>
+
+      <!-- UPLOAD: Etik Sözleşme -->
+      <div class="upload-card">
+        <div class="upload-card-title"><span></span>ETİK SÖZLEŞME YÜKLE</div>
+        <div class="etik-upload-area" onclick="document.getElementById('etikFile').click()">
+          <input type="file" id="etikFile" accept=".pdf,.doc,.docx,.jpg,.png" onchange="etikFileSelected(this)">
+          <div style="font-size:1.5rem;margin-bottom:4px">📎</div>
+          <div class="etik-upload-text">İmzalı etik sözleşmeyi buraya tıklayarak seçin</div>
+          <div style="font-size:11px;color:var(--bdr);margin-top:4px">PDF, Word veya görsel kabul edilir</div>
+          <div class="etik-file-name" id="etikFileName"></div>
+        </div>
+        <button class="btn-upload bg" id="bEtik" onclick="uploadEtik()" style="margin-top:10px;width:100%" disabled>
+          ☁️ Etik sözleşmeyi Drive'a yükle
+        </button>
+        <div class="upload-status" id="etikStatus"></div>
+        <a class="drive-link" href="https://drive.google.com/drive/u/0/folders/1pbbxMe4wnuWykNFQ5lekxK94MSMj138x" target="_blank">
+          🗂 Etik sözleşme klasörünü aç →
+        </a>
+      </div>
+    </div>
+
+  </div><!-- /page2 -->
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
+<script>
+// ── STATE ────────────────────────────────────────────────
+let LR = null;
+let etikFileData = null;
+let etikFileName2 = null;
+let etikMime = null;
+
+// ── WORD COUNT ───────────────────────────────────────────
+const txEl = document.getElementById('tx');
+txEl.addEventListener('input', () => {
+  const n = txEl.value.trim() ? txEl.value.trim().split(/\s+/).length : 0;
+  const el = document.getElementById('wc');
+  el.textContent = n + ' kelime';
+  el.className = 'wc' + (n > 2000 ? ' over' : n > 1500 ? ' ok' : '');
+});
+function wc(t){ return t.trim() ? t.trim().split(/\s+/).length : 0; }
+
+// ── NAVIGATION ───────────────────────────────────────────
+function showPage(n) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page' + n).classList.add('active');
+  document.querySelectorAll('.step').forEach((s, i) => {
+    s.classList.remove('active', 'done');
+    if (i + 1 < n) s.classList.add('done');
+    if (i + 1 === n) s.classList.add('active');
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function goBack() { showPage(1); }
+
+function showErr(id, msg) {
+  const e = document.getElementById(id);
+  e.textContent = '⚠ ' + msg;
+  e.className = 'err on';
+}
+
+// ── EVALUATE ─────────────────────────────────────────────
+async function evaluate() {
+  document.getElementById('err1').className = 'err';
+  const a1 = document.getElementById('a1').value.trim();
+  const ti = document.getElementById('ti').value.trim();
+  const tp = document.getElementById('tp').value;
+  const txt = txEl.value.trim();
+  if (!a1) { showErr('err1', 'Yazar adı giriniz.'); return; }
+  if (!ti) { showErr('err1', 'Başlık giriniz.'); return; }
+  if (!tp) { showErr('err1', 'Metin türü seçiniz.'); return; }
+  if (txt.length < 30) { showErr('err1', 'Daha uzun bir metin giriniz.'); return; }
+
+  const wordCount = wc(txt);
+  document.getElementById('evalBtn').disabled = true;
+  document.getElementById('ld1').className = 'loading on';
+
+  try {
+    const r = await fetch('/api/evaluate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ author: a1, title: ti, type: tp, text: txt, wordCount })
+    });
+    if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.error || 'Sunucu hatası'); }
+    const parsed = await r.json();
+    renderResults(parsed, a1, ti, tp, txt);
+    showPage(2);
+  } catch (e) {
+    showErr('err1', e.message);
+  } finally {
+    document.getElementById('evalBtn').disabled = false;
+    document.getElementById('ld1').className = 'loading';
+  }
+}
+
+// ── RENDER RESULTS ───────────────────────────────────────
+function renderResults(data, author, title, type, txt) {
+  const sc = data.toplam_puan;
+  const gr = sc >= 85 ? 'A' : sc >= 70 ? 'B' : sc >= 50 ? 'C' : 'D';
+  LR = {
+    author, author2: document.getElementById('a2').value.trim(),
+    class1: document.getElementById('cl').value.trim(),
+    title, type, text: txt, score: sc, grade: gr,
+    kriterler: data.kriterler || [], genel: data.genel_degerlendirme,
+    oneriler: data.gelistirme_onerileri || [],
+    tarih: new Date().toLocaleDateString('tr-TR')
+  };
+
+  document.getElementById('rtt').textContent = title;
+  document.getElementById('rtp').textContent = author + (LR.author2 ? ', ' + LR.author2 : '') + ' — ' + type;
+  document.getElementById('rsn').textContent = sc;
+  document.getElementById('rsc').className = 'sc s' + gr;
+
+  const cg = document.getElementById('cg'); cg.innerHTML = '';
+  (data.kriterler || []).forEach(k => {
+    const ratio = k.puan / k.max;
+    const c = ratio >= .8 ? 'cp' : ratio >= .5 ? 'cw' : 'cf';
+    cg.innerHTML += `<div class="cc ${c}">
+      <div class="cn">${k.ad}</div>
+      <div class="cs">${k.puan}<span style="font-size:.65em;font-family:'JetBrains Mono',monospace"> / ${k.max}</span></div>
+      <div class="cf2">${k.yorum}</div>
+    </div>`;
+  });
+
+  document.getElementById('gf').textContent = data.genel_degerlendirme;
+  const sg = document.getElementById('sg'); sg.innerHTML = '';
+  (data.gelistirme_onerileri || []).forEach(s => {
+    sg.innerHTML += `<div class="sug"><span>→</span><span>${s}</span></div>`;
+  });
+
+  // Reset upload statuses
+  ['makaleStatus', 'etikStatus'].forEach(id => {
+    const el = document.getElementById(id);
+    el.className = 'upload-status'; el.textContent = '';
+  });
+}
+
+// ── SAFE FILENAME ────────────────────────────────────────
+function sfn(t) {
+  return (t || 'makale').replace(/[^a-zA-Z0-9ğüşıöçĞÜŞİÖÇ\s_-]/g, '').trim().replace(/\s+/g, '_');
+}
+
+// ── GENERATE PDF BLOB ─────────────────────────────────────
+function generatePdfBlob() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const mg = 20, pw = 210, cw = pw - mg * 2; let y = 20;
+  const ln = (text, { size=11, bold=false, color=[30,20,10], indent=0, lh=6 }={}) => {
+    doc.setFontSize(size); doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setTextColor(...color);
+    doc.splitTextToSize(String(text), cw - indent).forEach(l => {
+      if (y > 272) { doc.addPage(); y = 20; }
+      doc.text(l, mg + indent, y); y += lh;
+    });
+  };
+  const hr = () => { doc.setDrawColor(212,201,176); doc.line(mg, y, pw-mg, y); y += 5; };
+
+  doc.setFillColor(26,18,8); doc.rect(0,0,210,28,'F');
+  doc.setFillColor(184,134,11); doc.rect(0,0,210,2,'F');
+  doc.setFontSize(16); doc.setFont('helvetica','bold'); doc.setTextColor(245,240,232);
+  doc.text('YADA DERGİSİ', mg, 13);
+  doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(212,160,23);
+  doc.text('ETİK UYGUNLUK DEĞERLENDİRME RAPORU', mg, 21);
+  const sc = LR.score>=85?[106,176,76]:LR.score>=70?[212,160,23]:LR.score>=50?[225,168,50]:[139,58,15];
+  doc.setDrawColor(...sc); doc.setLineWidth(.8); doc.circle(pw-mg-13, 42, 11);
+  doc.setFontSize(14); doc.setFont('helvetica','bold'); doc.setTextColor(...sc);
+  doc.text(String(LR.score), pw-mg-13, 46, { align:'center' });
+  doc.setFontSize(6); doc.setFont('helvetica','normal');
+  doc.text('/ 100', pw-mg-13, 51, { align:'center' });
+  y = 36;
+  ln(LR.title, { size:14, bold:true, color:[26,18,8] }); y+=1;
+  ln(`${LR.author}${LR.author2?' · '+LR.author2:''}`, { size:9, color:[80,60,30] });
+  ln(`${LR.type} · ${LR.class1} · ${LR.tarih}`, { size:8, color:[120,100,60] });
+  y+=3; hr();
+  ln('METİN', { size:8, bold:true, color:[120,100,60] }); y+=1;
+  ln(LR.text, { size:9, color:[40,30,15], lh:5 });
+  y+=4; hr();
+  ln('KRİTER BAZLI DEĞERLENDİRME', { size:8, bold:true, color:[120,100,60] }); y+=2;
+  LR.kriterler.forEach(k => {
+    const r=k.puan/k.max, c=r>=.8?[106,176,76]:r>=.5?[212,160,23]:[139,58,15];
+    doc.setFillColor(...c); doc.rect(mg, y-3, 2, 4, 'F');
+    ln(`${k.ad}: ${k.puan}/${k.max}`, { size:9, bold:true, color:[30,20,10], indent:4 }); y-=1;
+    ln(k.yorum, { size:8, color:[80,60,30], indent:4, lh:4.5 }); y+=2;
+  });
+  y+=2; hr();
+  ln('GENEL DEĞERLENDİRME', { size:8, bold:true, color:[120,100,60] }); y+=1;
+  ln(LR.genel, { size:9, color:[40,30,15], lh:5 });
+  y+=3; ln('GELİŞTİRİLECEK NOKTALAR', { size:8, bold:true, color:[120,100,60] }); y+=1;
+  LR.oneriler.forEach((o, i) => ln(`${i+1}. ${o}`, { size:9, color:[40,30,15], indent:2, lh:5 }));
+  const pc = doc.internal.getNumberOfPages();
+  for (let i=1; i<=pc; i++) {
+    doc.setPage(i); doc.setFillColor(26,18,8); doc.rect(0,288,210,10,'F');
+    doc.setFontSize(6); doc.setTextColor(150,130,80);
+    doc.text('YADA Dergisi © Etik Değerlendirme Modülü — Altıeylül BİLSEM', mg, 295);
+    doc.text(`${i}/${pc}`, pw-mg, 295, { align:'right' });
+  }
+  return doc.output('blob');
+}
+
+// ── GENERATE WORD BLOB ────────────────────────────────────
+async function generateWordBlob() {
+  const { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle, Table, TableRow, TableCell, WidthType, ShadingType } = docx;
+  const p = (runs, opts={}) => new Paragraph({ children: Array.isArray(runs)?runs:[runs], ...opts, spacing:{after:100} });
+  const r = (text, opts={}) => new TextRun({ text, font:'Times New Roman', size:22, ...opts });
+  const h = (text) => new Paragraph({ children:[new TextRun({text, bold:true, font:'Times New Roman', size:26, color:'1A1208'})], spacing:{before:180,after:80}, border:{bottom:{style:BorderStyle.SINGLE,size:4,color:'B8860B'}} });
+  const cRows = LR.kriterler.map(k => new TableRow({ children:[
+    new TableCell({children:[p(r(k.ad,{bold:true,size:18}))], width:{size:30,type:WidthType.PERCENTAGE}}),
+    new TableCell({children:[p(r(`${k.puan}/${k.max}`,{bold:true,size:20,color:k.puan/k.max>=.8?'3d8b1f':k.puan/k.max>=.5?'b8860b':'8b3a0f'}))], width:{size:15,type:WidthType.PERCENTAGE}}),
+    new TableCell({children:[p(r(k.yorum,{size:18,italics:true}))], width:{size:55,type:WidthType.PERCENTAGE}}),
+  ]}));
+  const doc2 = new Document({ sections:[{ children:[
+    new Paragraph({children:[new TextRun({text:'YADA DERGİSİ',bold:true,font:'Times New Roman',size:32,color:'1A1208'})],alignment:AlignmentType.CENTER,spacing:{after:40}}),
+    new Paragraph({children:[new TextRun({text:'Etik Uygunluk Değerlendirme Raporu',italics:true,font:'Times New Roman',size:20,color:'B8860B'})],alignment:AlignmentType.CENTER,spacing:{after:200}}),
+    h('Makale Bilgileri'),
+    p([r('Başlık: ',{bold:true}),r(LR.title)]),
+    p([r('Yazar: ',{bold:true}),r(LR.author+(LR.author2?', '+LR.author2:''))]),
+    p([r('Sınıf/Kurum: ',{bold:true}),r(LR.class1)]),
+    p([r('Tür: ',{bold:true}),r(LR.type)]),
+    p([r('Tarih: ',{bold:true}),r(LR.tarih)]),
+    p([r('Puan: ',{bold:true}),r(`${LR.score}/100 (${LR.grade})`,{bold:true,color:LR.score>=85?'3d8b1f':LR.score>=70?'b8860b':'8b3a0f'})]),
+    h('Makale Metni'),
+    ...LR.text.split('\n').filter(Boolean).map(l=>p(r(l))),
+    h('Kriter Bazlı Değerlendirme'),
+    new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
+      new TableRow({tableHeader:true,children:[
+        new TableCell({children:[p(r('Kriter',{bold:true,size:18,color:'F5F0E8'}))],shading:{type:ShadingType.SOLID,color:'1A1208',fill:'1A1208'}}),
+        new TableCell({children:[p(r('Puan',{bold:true,size:18,color:'F5F0E8'}))],shading:{type:ShadingType.SOLID,color:'1A1208',fill:'1A1208'}}),
+        new TableCell({children:[p(r('Değerlendirme',{bold:true,size:18,color:'F5F0E8'}))],shading:{type:ShadingType.SOLID,color:'1A1208',fill:'1A1208'}}),
+      ]}),
+      ...cRows
+    ]}),
+    h('Genel Değerlendirme'),
+    p(r(LR.genel,{italics:true})),
+    h('Geliştirme Önerileri'),
+    ...LR.oneriler.map((o,i)=>p(r(`${i+1}. ${o}`))),
+    new Paragraph({children:[new TextRun({text:'YADA Dergisi © Etik Değerlendirme Modülü — Altıeylül BİLSEM',font:'Times New Roman',size:16,color:'9E8850',italics:true})],alignment:AlignmentType.CENTER,spacing:{before:300},border:{top:{style:BorderStyle.SINGLE,size:4,color:'D4C9B0'}}})
+  ]}]});
+  return await Packer.toBlob(doc2);
+}
+
+// ── UPLOAD TO DRIVE ───────────────────────────────────────
+async function blobToBase64(blob) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = () => res(reader.result.split(',')[1]);
+    reader.onerror = rej;
+    reader.readAsDataURL(blob);
+  });
+}
+
+function setStatus(id, type, msg) {
+  const el = document.getElementById(id);
+  el.className = 'upload-status ' + type;
+  el.textContent = msg;
+}
+
+async function uploadMakale(format) {
+  if (!LR) return;
+  const wBtn = document.getElementById('bWord');
+  const pBtn = document.getElementById('bPdf');
+  wBtn.disabled = true; pBtn.disabled = true;
+  setStatus('makaleStatus', 'loading', '⏳ Dosya oluşturuluyor ve yükleniyor…');
+
+  try {
+    let blob, fileName, mimeType;
+    if (format === 'word') {
+      blob = await generateWordBlob();
+      fileName = `YADA_${sfn(LR.title)}_${LR.tarih.replace(/\./g,'')}.docx`;
+      mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    } else {
+      blob = generatePdfBlob();
+      fileName = `YADA_${sfn(LR.title)}_${LR.tarih.replace(/\./g,'')}.pdf`;
+      mimeType = 'application/pdf';
+    }
+
+    const fileData = await blobToBase64(blob);
+    const r = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileData, fileName, mimeType, folder: 'makale' })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Yükleme başarısız');
+    setStatus('makaleStatus', 'ok', `✓ "${data.name}" Drive'a yüklendi!`);
+  } catch (e) {
+    setStatus('makaleStatus', 'fail', '✗ Hata: ' + e.message);
+  } finally {
+    wBtn.disabled = false; pBtn.disabled = false;
+  }
+}
+
+// ── ETİK SÖZLEŞME ─────────────────────────────────────────
+function etikFileSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  etikFileName2 = file.name;
+  etikMime = file.type || 'application/octet-stream';
+  document.getElementById('etikFileName').style.display = 'block';
+  document.getElementById('etikFileName').textContent = '📎 ' + file.name;
+  document.getElementById('bEtik').disabled = false;
+
+  const reader = new FileReader();
+  reader.onload = (e) => { etikFileData = e.target.result.split(',')[1]; };
+  reader.readAsDataURL(file);
+}
+
+async function uploadEtik() {
+  if (!etikFileData) return;
+  const btn = document.getElementById('bEtik');
+  btn.disabled = true;
+  setStatus('etikStatus', 'loading', '⏳ Etik sözleşme yükleniyor…');
+  try {
+    const r = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileData: etikFileData, fileName: etikFileName2, mimeType: etikMime, folder: 'etik' })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Yükleme başarısız');
+    setStatus('etikStatus', 'ok', `✓ "${data.name}" Drive'a yüklendi!`);
+  } catch (e) {
+    setStatus('etikStatus', 'fail', '✗ Hata: ' + e.message);
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
